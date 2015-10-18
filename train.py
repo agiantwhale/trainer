@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import os
 import random
+import argparse
 
 def train_svm(positive, negative, k):
     """
@@ -53,14 +54,25 @@ def extract_random_patch(frame, size):
     return roi
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Train a HOG classifier.",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("width", metavar="W", type=int, help="width of the HOG window")
+    parser.add_argument("height", metavar="H", type=int, help="height of the HOG window")
+    parser.add_argument("-k", "--kfolds", nargs="?", type=int, default=10, help="k-cross validation count")
+    parser.add_argument("-o", "--output", nargs="?", type=str, default=os.getcwd()+"/result.model", help="detecting vector output file")
+    parser.add_argument("-p", "--positive", nargs="?", type=str, default=os.getcwd()+"/positive", help="positive sample directory")
+    parser.add_argument("-n", "--negative", nargs="?", type=str, default=os.getcwd()+"/negative", help="negative sample directory")
+
+    args = parser.parse_args()
+
     random.seed()
 
-    width = 72
-    height = 128
-    output_dir = ""
-    positive_dir = ""
-    negative_dir = ""
-    k_value = 10
+    width = args.width
+    height = args.height
+    k_value = args.kfolds
+    output_dir = args.output
+    positive_dir = args.positive
+    negative_dir = args.negative
 
     SIZE = (width, height)
 
