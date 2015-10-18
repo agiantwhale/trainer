@@ -5,6 +5,7 @@ Collects data from a video source.
 
 import cv2
 import argparse
+import uuid
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a HOG classifier.",
@@ -38,7 +39,7 @@ if __name__ == "__main__":
 
         if record:
             if frames_count < max:
-                cv2.imwrite(output_dir+"/"+str(total_frames_count)+".png", frame)
+                cv2.imwrite(output_dir+"/"+str(uuid.uuid4())+".png", frame)
                 frames_count += 1
                 total_frames_count += 1
                 print str(total_frames_count) + " framed recorded..."
