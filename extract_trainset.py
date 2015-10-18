@@ -98,13 +98,14 @@ if __name__ == "__main__":
         print "Applying negative mining..."
         for sample in negative_samples_path:
             print "\t - " + sample
-            frame = cv2.imread(sample)
+            frame = cv2.imread(sample, cv2.CV_LOAD_IMAGE_GRAYSCALE)
             if frame is None:
                 continue
             found, w = hog.detectMultiScale(frame)
             for rect in found:
                 print "\t\t - Mined!"
-                roi = frame[rect.y:rect.y+rect.h, rect.x:rect.x+rect.w]
+                x, y, w, h = rect
+                roi = frame[y:y+h, x:x+w]
                 feature = compute_hog(cv2.resize(roi, SIZE), hog)
                 individual = "-1"
                 for ind, f in enumerate(feature):
