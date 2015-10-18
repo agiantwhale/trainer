@@ -98,6 +98,7 @@ if __name__ == "__main__":
                 individual = "-1"
                 for ind, f in enumerate(feature):
                     individual += (" "+str(ind)+":"+str(f[0]))
+                individual += "\n"
                 trainset.write(individual)
     else:
         trainset = open(output, "w")
@@ -112,6 +113,7 @@ if __name__ == "__main__":
             individual = "+1"
             for ind, f in enumerate(feature):
                 individual += (" "+str(ind)+":"+str(f[0]))
+            individual += "\n"
             trainset.write(individual)
 
         for f in negative_samples_path:
@@ -124,4 +126,5 @@ if __name__ == "__main__":
             individual = "-1"
             for ind, f in enumerate(feature):
                 individual += (" "+str(ind)+":"+str(f[0]))
+            individual += "\n"
             trainset.write(individual)
