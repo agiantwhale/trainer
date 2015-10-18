@@ -10,10 +10,7 @@ import argparse
 
 def draw_detections(img, rects):
     for x, y, w, h in rects:
-        # the HOG detector returns slightly larger rectangles than the real objects.
-        # so we slightly shrink the rectangles to get a nicer output.
-        pad_w, pad_h = int(0.15*w), int(0.05*h)
-        cv2.rectangle(img, (x+pad_w, y+pad_h), (x+w-pad_w, y+h-pad_h), (0, 255, 0), 3)
+        cv2.rectangle(img, (x,y), (x+w, y+h), (0, 255, 0), 3)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a HOG classifier.",
@@ -54,8 +51,8 @@ if __name__ == "__main__":
 
     hog.setSVMDetector(np.array(detector, dtype=np.float32))
 
-    image = cv2.imread(source)
-    found, w = hog.detectMultiScale(image, winStride=(8,8), padding=(32,32), scale=1.05)
+    image = cv2.imread(source, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    found, w = hog.detectMultiScale(image)
     draw_detections(image, found)
     cv2.imshow("Test",image)
     cv2.waitKey(0)

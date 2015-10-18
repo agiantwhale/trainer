@@ -16,8 +16,9 @@ def compute_hog(frame, hog):
     :param hog: OpenCV HOG Descriptor
     :return: features
     """
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    return hog.compute(gray)
+    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # return hog.compute(gray)
+    return hog.compute(frame)
 
 def extract_random_patch(frame, size):
     """
@@ -115,7 +116,7 @@ if __name__ == "__main__":
         print "Loading samples..."
         for f in positive_samples_path:
             print "\t - " + f
-            image = cv2.imread(f)
+            image = cv2.imread(f, cv2.CV_LOAD_IMAGE_GRAYSCALE)
             if image is None:
                 continue
             roi = cv2.resize(image, SIZE)
@@ -128,7 +129,7 @@ if __name__ == "__main__":
 
         for f in negative_samples_path:
             print "\t - " + f
-            image = cv2.imread(f)
+            image = cv2.imread(f, cv2.CV_LOAD_IMAGE_GRAYSCALE)
             if image is None:
                 continue
             roi = extract_random_patch(image, SIZE)
