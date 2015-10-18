@@ -4,6 +4,7 @@ Extract train set.
 """
 
 import cv2
+import numpy as np
 import os
 import random
 import argparse
@@ -46,7 +47,7 @@ if __name__ == "__main__":
                         help="positive sample directory")
     parser.add_argument("-n", "--negative", nargs="?", type=str, default=os.getcwd()+"/negative",
                         help="negative sample directory")
-    parser.add_argument("-m", "--mine", nargs="?", type=bool, default=False,
+    parser.add_argument("-m", "--model", nargs="?", type=str, default=os.getcwd()+"/results.features",
                         help="run negative mining?")
 
     args = parser.parse_args()
@@ -56,7 +57,7 @@ if __name__ == "__main__":
     width = args.width
     height = args.height
     output = args.output
-    mine = args.mine
+    model = args.model
     positive_dir = args.positive
     negative_dir = args.negative
 
@@ -84,15 +85,21 @@ if __name__ == "__main__":
                              for f in os.listdir(negative_dir)
                              if os.path.isfile(os.path.join(negative_dir,f))]
 
-    if mine:
+    if os.path.isfile(model):
         trainset = open(output, "a")
+
+        detector = []
+        with open(model, "r") as svm:
+            for line in svm:
+                detector.append(float(line))
+        hog.setSVMDetector(np.array(detector, dtype=np.float32))
+
         print "Applying negative mining..."
         for sample in negative_samples_path:
             print "\t - " + sample
             frame = cv2.imread(sample)
             if frame is None:
                 continue
-            # FIXME: load the model file
             found, w = hog.detectMultiScale(frame, winStride=(8,8), padding=(32,32), scale=1.05)
             for rect in found:
                 print "\t\t - Mined!"

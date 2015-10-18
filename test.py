@@ -4,6 +4,7 @@ Tests the trained data.
 """
 
 import cv2
+import numpy as np
 import os
 import argparse
 
@@ -19,8 +20,9 @@ if __name__ == "__main__":
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("width", metavar="W", type=int, help="width of the HOG window")
     parser.add_argument("height", metavar="H", type=int, help="height of the HOG window")
-    parser.add_argument("-o", "--output", nargs="?", type=str, default=os.getcwd()+"/result.model", help="detecting vector output file")
-    parser.add_argument("-s", "--source", nargs="?", type=int, default=0, help="camera source")
+    parser.add_argument("-o", "--output", nargs="?", type=str, default=os.getcwd()+"/result.feature",
+                        help="detecting vector output file")
+    parser.add_argument("-s", "--source", nargs="?", type=str, default=0, help="test source")
 
     args = parser.parse_args()
 
@@ -50,21 +52,12 @@ if __name__ == "__main__":
         for line in model:
             detector.append(float(line))
 
-    hog.setSVMDetector(detector)
+    hog.setSVMDetector(np.array(detector, dtype=np.float32))
 
-    video_capture = cv2.VideoCapture(source)
+    image = cv2.imread(source)
+    found, w = hog.detectMultiScale(image, winStride=(8,8), padding=(32,32), scale=1.05)
+    draw_detections(image, found)
+    cv2.imshow("Test",image)
+    cv2.waitKey(0)
 
-    while True:
-        ret, frame = video_capture.read()
-
-        found, w = hog.detectMultiScale(frame, winStride=(8,8), padding=(32,32), scale=1.05)
-        draw_detections(frame, found)
-
-        cv2.imshow("Video", frame)
-
-        key = cv2.waitKey(1)
-        if key == 27:
-            break
-
-    video_capture.release()
     cv2.destroyAllWindows()

@@ -20,17 +20,17 @@ if __name__ == "__main__":
     svm_model = svmutil.svm_load_model(model)
 
     support_vector_coefficients = svm_model.get_sv_coef()
-    support_vectors = svm_model.get_sv()
+    support_vectors = svm_model.get_SV()
 
     detector = []
 
     for index, support_vector in enumerate(support_vectors):
-        alpha = support_vector_coefficients[0][index]
-        for component_index, component in enumerate(support_vector):
+        alpha = support_vector_coefficients[index][0]
+        for component_index, component in support_vector.iteritems():
             if index == 0:
-                detector.append(component.value * alpha)
+                detector.append(component * alpha)
             else:
-                detector[component_index] += component.value * alpha
+                detector[component_index-1] += component * alpha
 
     detector_file = open(output, "w")
     for f in detector:
