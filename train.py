@@ -8,6 +8,7 @@ import numpy as np
 import os
 import random
 import argparse
+import cPickle
 
 def train_svm(positive, negative, k):
     """
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     width = args.width
     height = args.height
     k_value = args.kfolds
-    output_dir = args.output
+    output = args.output
     positive_dir = args.positive
     negative_dir = args.negative
 
@@ -106,3 +107,4 @@ if __name__ == "__main__":
 
     # Run detection again
     detector = train_svm(positive_features, negative_features, k_value)
+    cPickle.dump(detector, output)

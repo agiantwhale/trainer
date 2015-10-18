@@ -6,6 +6,7 @@ Tests the trained data.
 import cv2
 import os
 import argparse
+import cPickle
 
 def draw_detections(img, rects):
     for x, y, w, h in rects:
@@ -26,13 +27,14 @@ if __name__ == "__main__":
 
     width = args.width
     height = args.height
-    output_dir = args.output
+    output = args.output
     source = args.source
 
     SIZE = (width, height)
 
     hog = cv2.HOGDescriptor()
     hog.winSize = SIZE
+    hog.setSVMDetector(cPickle.load(output))
 
     video_capture = cv2.VideoCapture(source)
 
