@@ -55,7 +55,6 @@ if __name__ == "__main__":
 
     width = args.width
     height = args.height
-    k_value = args.kfolds
     output = args.output
     model = args.model
     positive_dir = args.positive
@@ -86,7 +85,7 @@ if __name__ == "__main__":
                              if os.path.isfile(os.path.join(negative_dir,f))]
 
     if os.path.isfile(model):
-        trainset = open(model, "a")
+        trainset = open(output, "a")
         print "Applying negative mining..."
         for sample in negative_samples_path:
             print "\t - " + sample
@@ -96,12 +95,12 @@ if __name__ == "__main__":
                 print "\t\t - Mined!"
                 roi = frame[rect.y:rect.y+rect.h, rect.x:rect.x+rect.w]
                 feature = compute_hog(cv2.resize(roi, SIZE), hog)
-                individual = "0"
+                individual = "-1"
                 for ind, f in enumerate(feature):
-                    individual += (" "+ind+":"+f)
+                    individual += (" "+str(ind)+":"+str(f[0]))
                 trainset.write(individual)
     else:
-        trainset = open(model, "w")
+        trainset = open(output, "w")
         print "Loading samples..."
         for f in positive_samples_path:
             print "\t - " + f
@@ -110,9 +109,9 @@ if __name__ == "__main__":
                 continue
             roi = cv2.resize(image, SIZE)
             feature = compute_hog(roi, hog)
-            individual = "1"
+            individual = "+1"
             for ind, f in enumerate(feature):
-                individual += (" "+ind+":"+f)
+                individual += (" "+str(ind)+":"+str(f[0]))
             trainset.write(individual)
 
         for f in negative_samples_path:
@@ -122,7 +121,7 @@ if __name__ == "__main__":
                 continue
             roi = extract_random_patch(image, SIZE)
             feature = compute_hog(roi, hog)
-            individual = "0"
+            individual = "-1"
             for ind, f in enumerate(feature):
-                individual += (" "+ind+":"+f)
+                individual += (" "+str(ind)+":"+str(f[0]))
             trainset.write(individual)
