@@ -31,3 +31,7 @@ if __name__ == "__main__":
                 detector.append(component.value * alpha)
             else:
                 detector[component_index] += component.value * alpha
+
+    detector_file = open(output, "w")
+    for f in detector:
+        detector_file.write(str(f)+"\n")

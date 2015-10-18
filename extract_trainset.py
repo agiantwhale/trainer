@@ -99,7 +99,7 @@ if __name__ == "__main__":
                 feature = compute_hog(cv2.resize(roi, SIZE), hog)
                 individual = "-1"
                 for ind, f in enumerate(feature):
-                    individual += (" "+str(ind)+":"+str(f[0]))
+                    individual += (" "+str(ind+1)+":"+str(f[0]))
                 individual += "\n"
                 trainset.write(individual)
     else:
@@ -114,7 +114,7 @@ if __name__ == "__main__":
             feature = compute_hog(roi, hog)
             individual = "+1"
             for ind, f in enumerate(feature):
-                individual += (" "+str(ind)+":"+str(f[0]))
+                individual += (" "+str(ind+1)+":"+str(f[0]))
             individual += "\n"
             trainset.write(individual)
 
@@ -127,6 +127,6 @@ if __name__ == "__main__":
             feature = compute_hog(roi, hog)
             individual = "-1"
             for ind, f in enumerate(feature):
-                individual += (" "+str(ind)+":"+str(f[0]))
+                individual += (" "+str(ind+1)+":"+str(f[0]))
             individual += "\n"
             trainset.write(individual)
