@@ -51,10 +51,23 @@ if __name__ == "__main__":
 
     hog.setSVMDetector(np.array(detector, dtype=np.float32))
 
-    image = cv2.imread(source, cv2.CV_LOAD_IMAGE_GRAYSCALE)
-    found, w = hog.detectMultiScale(image)
-    draw_detections(image, found)
-    cv2.imshow("Test",image)
-    cv2.waitKey(0)
+    try:
+        camera_source = int(source)
+        cap = cv2.VideoCapture(camera_source)
+        while True:
+            ret, frame = cap.read()
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            found, w = hog.detectMultiScale(gray)
+            draw_detections(frame, found)
+            cv2.imshow("Test", frame)
+            if cv2.waitKey(1) == 27:
+                break
+    except ValueError:
+        image = cv2.imread(source)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        found, w = hog.detectMultiScale(gray)
+        draw_detections(image, found)
+        cv2.imshow("Test",image)
+        cv2.waitKey(0)
 
     cv2.destroyAllWindows()
