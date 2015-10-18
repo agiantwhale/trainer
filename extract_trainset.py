@@ -101,7 +101,7 @@ if __name__ == "__main__":
             frame = cv2.imread(sample)
             if frame is None:
                 continue
-            found, w = hog.detectMultiScale(frame, winStride=(8,8), padding=(32,32), scale=1.05)
+            found, w = hog.detectMultiScale(frame)
             for rect in found:
                 print "\t\t - Mined!"
                 roi = frame[rect.y:rect.y+rect.h, rect.x:rect.x+rect.w]
