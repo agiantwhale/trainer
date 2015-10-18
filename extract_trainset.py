@@ -3,6 +3,7 @@
 Extract train set.
 """
 
+import multiprocessing as mp
 import cv2
 import numpy as np
 import os
@@ -18,6 +19,23 @@ def compute_hog(frame, hog):
     """
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return hog.compute(gray)
+
+def mine_image(frame, hog):
+    """
+    Run negative mining on image, and extract false positives.
+    :param frame: Image matrix
+    :param hog:  OpenCV HOG Descriptor
+    :return: features
+    """
+    found, w = hog.detectMultiScale(frame)
+    features = []
+    for rect in found:
+        print "\t\t - Mined!"
+        x, y, w, h = rect
+        roi = frame[y:y+h, x:x+w]
+        feature = compute_hog(cv2.resize(roi, SIZE), hog)
+        features.append(feature)
+    return features
 
 def extract_random_patch(frame, size):
     """
@@ -94,18 +112,29 @@ if __name__ == "__main__":
                 detector.append(float(line))
         hog.setSVMDetector(np.array(detector, dtype=np.float32))
 
+        output = mp.Queue()
+        processes = []
+
         print "Applying negative mining..."
         for sample in negative_samples_path:
             print "\t - " + sample
             frame = cv2.imread(sample)
             if frame is None:
                 continue
-            found, w = hog.detectMultiScale(frame)
-            for rect in found:
-                print "\t\t - Mined!"
-                x, y, w, h = rect
-                roi = frame[y:y+h, x:x+w]
-                feature = compute_hog(cv2.resize(roi, SIZE), hog)
+            processes.append(
+                mp.Process(target=mine_image, args=(frame, hog))
+            )
+
+        for p in processes:
+            p.start()
+
+        for p in processes:
+            p.join()
+
+        results = [output.get() for p in processes]
+
+        for result in results:
+            for feature in result:
                 individual = "-1"
                 for ind, f in enumerate(feature):
                     individual += (" "+str(ind+1)+":"+str(f[0]))
