@@ -20,22 +20,27 @@ def compute_hog(frame, hog):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return hog.compute(gray)
 
-def mine_image(frame, hog):
+def mine_image(lock, frame, hog, output):
     """
     Run negative mining on image, and extract false positives.
+    :param lock: Mutex
     :param frame: Image matrix
-    :param hog:  OpenCV HOG Descriptor
-    :return: features
+    :param hog: OpenCV HOG Descriptor
+    :param output: File to write to
+    :return: None
     """
     found, w = hog.detectMultiScale(frame)
-    features = []
     for rect in found:
-        print "\t\t - Mined!"
         x, y, w, h = rect
         roi = frame[y:y+h, x:x+w]
         feature = compute_hog(cv2.resize(roi, SIZE), hog)
-        features.append(feature)
-    return features
+        individual = "-1"
+        for ind, f in enumerate(feature):
+            individual += (" "+str(ind+1)+":"+str(f[0]))
+        individual += "\n"
+        lock.acquire()
+        output.write(individual)
+        lock.release()
 
 def extract_random_patch(frame, size):
     """
@@ -112,8 +117,7 @@ if __name__ == "__main__":
                 detector.append(float(line))
         hog.setSVMDetector(np.array(detector, dtype=np.float32))
 
-        output = mp.Queue()
-        processes = []
+        lock = mp.Lock()
 
         print "Applying negative mining..."
         for sample in negative_samples_path:
@@ -121,25 +125,8 @@ if __name__ == "__main__":
             frame = cv2.imread(sample)
             if frame is None:
                 continue
-            processes.append(
-                mp.Process(target=mine_image, args=(frame, hog))
-            )
-
-        for p in processes:
-            p.start()
-
-        for p in processes:
-            p.join()
-
-        results = [output.get() for p in processes]
-
-        for result in results:
-            for feature in result:
-                individual = "-1"
-                for ind, f in enumerate(feature):
-                    individual += (" "+str(ind+1)+":"+str(f[0]))
-                individual += "\n"
-                trainset.write(individual)
+            process = mp.Process(target=mine_image, args=(lock, frame, hog, trainset))
+            process.start()
     else:
         trainset = open(output, "w")
         print "Loading samples..."
