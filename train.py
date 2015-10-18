@@ -46,13 +46,15 @@ def extract_random_patch(frame, size):
     :param size: size of the random patch
     :return: ROI
     """
-    frame_w, frame_h = frame.shape[:2]
-    x1 = random.randint(0, frame_w-width)
+    frame_h, frame_w = frame.shape[:2]
+    width = size[0]
+    height = size[1]
+    x1 = random.randint(0, frame_w-width-1)
     x2 = x1 + width
-    y1 = random.randint(0, frame_h-height)
+    y1 = random.randint(0, frame_h-height-1)
     y2 = y1 + height
     roi = frame[y1:y2, x1:x2]
-    return roi
+    return roi.copy()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a HOG classifier.",
@@ -77,20 +79,46 @@ if __name__ == "__main__":
 
     SIZE = (width, height)
 
-    hog = cv2.HOGDescriptor()
-    hog.winSize = SIZE
+    winSize = SIZE
+    blockSize = (16,16)
+    blockStride = (8,8)
+    cellSize = (8,8)
+    nbins = 9
+    derivAperture = 1
+    winSigma = 4.
+    histogramNormType = 0
+    L2HysThreshold = 2.0000000000000001e-01
+    gammaCorrection = 0
+    nlevels = 64
+    hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,
+                            histogramNormType,L2HysThreshold,gammaCorrection,nlevels)
 
     # Load the sample paths
-    positive_samples_path = [f for f in os.listdir(positive_dir) if os.path.isfile(os.path.join(positive_dir,f))]
-    negative_samples_path = [f for f in os.listdir(negative_dir) if os.path.isfile(os.path.join(negative_dir,f))]
+    positive_samples_path = [os.path.join(positive_dir,f)
+                             for f in os.listdir(positive_dir)
+                             if os.path.isfile(os.path.join(positive_dir,f))]
+    negative_samples_path = [os.path.join(negative_dir,f)
+                             for f in os.listdir(negative_dir)
+                             if os.path.isfile(os.path.join(negative_dir,f))]
 
     # Load the samples
-    positive_features = [
-        compute_hog(cv2.resize(cv2.imread(f), SIZE), hog)
-        for f in positive_samples_path]
-    negative_features = [
-        compute_hog(extract_random_patch(cv2.imread(f), SIZE), hog)
-        for f in negative_samples_path]
+    positive_features = []
+    negative_features = []
+
+    for f in positive_samples_path:
+        image = cv2.imread(f)
+        if image is None:
+            continue
+        roi = cv2.resize(image, SIZE)
+        positive_features.append(compute_hog(roi, hog))
+
+    for f in negative_samples_path:
+        print f
+        image = cv2.imread(f)
+        if image is None:
+            continue
+        roi = extract_random_patch(image, SIZE)
+        negative_features.append(compute_hog(roi, hog))
 
     # Train the SVM
     detector = train_svm(positive_features, negative_features, k_value)
