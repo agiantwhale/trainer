@@ -105,7 +105,9 @@ if __name__ == "__main__":
     positive_features = []
     negative_features = []
 
+    print "Loading samples..."
     for f in positive_samples_path:
+        print "\t - " + f
         image = cv2.imread(f)
         if image is None:
             continue
@@ -113,7 +115,7 @@ if __name__ == "__main__":
         positive_features.append(compute_hog(roi, hog))
 
     for f in negative_samples_path:
-        print f
+        print "\t - " + f
         image = cv2.imread(f)
         if image is None:
             continue
@@ -121,18 +123,23 @@ if __name__ == "__main__":
         negative_features.append(compute_hog(roi, hog))
 
     # Train the SVM
+    print "Training..."
     detector = train_svm(positive_features, negative_features, k_value)
     hog.setSVMDetector(detector)
 
     # Run negative mining
+    print "Applying negative mining..."
     for sample in negative_samples_path:
+        print "\t - " + sample
         frame = cv2.imread(sample)
         found, w = hog.detectMultiScale(frame, winStride=(8,8), padding=(32,32), scale=1.05)
         for rect in found:
+            print "\t\t - Mined!"
             roi = frame[rect.y:rect.y+rect.h, rect.x:rect.x+rect.w]
             feature = compute_hog(cv2.resize(roi, SIZE), hog)
             negative_features.append(feature)
 
     # Run detection again
+    print "Retraining..."
     detector = train_svm(positive_features, negative_features, k_value)
     cPickle.dump(detector, output)
