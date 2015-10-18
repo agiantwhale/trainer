@@ -92,6 +92,7 @@ if __name__ == "__main__":
             frame = cv2.imread(sample)
             if frame is None:
                 continue
+            # FIXME: load the model file
             found, w = hog.detectMultiScale(frame, winStride=(8,8), padding=(32,32), scale=1.05)
             for rect in found:
                 print "\t\t - Mined!"
