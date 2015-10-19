@@ -9,6 +9,78 @@ import numpy as np
 import os
 import random
 import argparse
+import functools
+
+def mine_image(detector, size, path):
+    """
+    Run negative mining on image, and extract false positives.
+    :param path: Path to image file
+    :param hog: OpenCV HOG Descriptor
+    :return: list of features
+    """
+    winSize = size
+    blockSize = (16,16)
+    blockStride = (8,8)
+    cellSize = (8,8)
+    nbins = 9
+    print size
+    print len(detector)
+    hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins)
+    hog.setSVMDetector(np.array(detector, dtype=np.float32))
+
+    frame = cv2.imread(path)
+    if frame is None:
+        return []
+    print "\t - Mining " + path
+    found, w = hog.detectMultiScale(frame)
+    features = []
+    for rect in found:
+        print "\t\t - Mined!"
+        x, y, w, h = rect
+        roi = frame[y:y+h, x:x+w]
+        feature = compute_hog(cv2.resize(roi, hog.winSize), hog)
+        features.append(feature)
+    return features
+
+def extract_positive_features(size, path):
+    """
+    Extract positive features from an image
+    :param path: Path to image file
+    :param hog: OpenCV HOG Descriptor
+    :return: list of features
+    """
+    winSize = size
+    blockSize = (16,16)
+    blockStride = (8,8)
+    cellSize = (8,8)
+    nbins = 9
+    hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins)
+
+    frame = cv2.imread(path)
+    if frame is None:
+        return None
+    print "\t - Loading " + path
+    return compute_hog(cv2.resize(frame, hog.winSize), hog)
+
+def extract_negative_features(size, path):
+    """
+    Extract negative features from an image
+    :param path: Path to image file
+    :param hog: OpenCV HOG Descriptor
+    :return: list of features
+    """
+    winSize = size
+    blockSize = (16,16)
+    blockStride = (8,8)
+    cellSize = (8,8)
+    nbins = 9
+    hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins)
+
+    frame = cv2.imread(path)
+    if frame is None:
+        return None
+    print "\t - Loading " + path
+    return compute_hog(extract_random_patch(frame, hog.winSize), hog)
 
 def compute_hog(frame, hog):
     """
@@ -19,28 +91,6 @@ def compute_hog(frame, hog):
     """
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     return hog.compute(gray)
-
-def mine_image(lock, frame, hog, output):
-    """
-    Run negative mining on image, and extract false positives.
-    :param lock: Mutex
-    :param frame: Image matrix
-    :param hog: OpenCV HOG Descriptor
-    :param output: File to write to
-    :return: None
-    """
-    found, w = hog.detectMultiScale(frame)
-    for rect in found:
-        x, y, w, h = rect
-        roi = frame[y:y+h, x:x+w]
-        feature = compute_hog(cv2.resize(roi, SIZE), hog)
-        individual = "-1"
-        for ind, f in enumerate(feature):
-            individual += (" "+str(ind+1)+":"+str(f[0]))
-        individual += "\n"
-        lock.acquire()
-        output.write(individual)
-        lock.release()
 
 def extract_random_patch(frame, size):
     """
@@ -86,20 +136,6 @@ if __name__ == "__main__":
 
     SIZE = (width, height)
 
-    winSize = SIZE
-    blockSize = (16,16)
-    blockStride = (8,8)
-    cellSize = (8,8)
-    nbins = 9
-    derivAperture = 1
-    winSigma = 4.
-    histogramNormType = 0
-    L2HysThreshold = 2.0000000000000001e-01
-    gammaCorrection = 0
-    nlevels = 64
-    hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,
-                            histogramNormType,L2HysThreshold,gammaCorrection,nlevels)
-
     # Load the sample paths
     positive_samples_path = [os.path.join(positive_dir,f)
                              for f in os.listdir(positive_dir)
@@ -108,48 +144,44 @@ if __name__ == "__main__":
                              for f in os.listdir(negative_dir)
                              if os.path.isfile(os.path.join(negative_dir,f))]
 
+    manager = mp.Manager()
+    queue = manager.Queue()
+    pool = mp.Pool(mp.cpu_count())
+
     if os.path.isfile(model):
+        neg_mining = True
         trainset = open(output, "a")
-
-        detector = []
-        with open(model, "r") as svm:
-            for line in svm:
-                detector.append(float(line))
-        hog.setSVMDetector(np.array(detector, dtype=np.float32))
-
-        lock = mp.Lock()
-
+        detector = [float(line) for line in open(model, "r")]
         print "Applying negative mining..."
-        for sample in negative_samples_path:
-            print "\t - " + sample
-            frame = cv2.imread(sample)
-            if frame is None:
-                continue
-            process = mp.Process(target=mine_image, args=(lock, frame, hog, trainset))
-            process.start()
     else:
+        neg_mining = False
         trainset = open(output, "w")
         print "Loading samples..."
-        for f in positive_samples_path:
-            print "\t - " + f
-            image = cv2.imread(f)
-            if image is None:
+
+    if neg_mining:
+        func = functools.partial(mine_image, detector, SIZE)
+        for result in pool.imap(func, [path for path in negative_samples_path]):
+            for feature in result:
+                individual = "-1"
+                for ind, f in enumerate(feature):
+                    individual += (" "+str(ind+1)+":"+str(f[0]))
+                individual += "\n"
+                trainset.write(individual)
+    else:
+        pos_func = functools.partial(extract_positive_features, SIZE)
+        for feature in pool.imap(pos_func, [path for path in positive_samples_path]):
+            if feature is None:
                 continue
-            roi = cv2.resize(image, SIZE)
-            feature = compute_hog(roi, hog)
             individual = "+1"
             for ind, f in enumerate(feature):
                 individual += (" "+str(ind+1)+":"+str(f[0]))
             individual += "\n"
             trainset.write(individual)
 
-        for f in negative_samples_path:
-            print "\t - " + f
-            image = cv2.imread(f)
-            if image is None:
+        neg_func = functools.partial(extract_negative_features, SIZE)
+        for feature in pool.imap(neg_func, [path for path in negative_samples_path]):
+            if feature is None:
                 continue
-            roi = extract_random_patch(image, SIZE)
-            feature = compute_hog(roi, hog)
             individual = "-1"
             for ind, f in enumerate(feature):
                 individual += (" "+str(ind+1)+":"+str(f[0]))
