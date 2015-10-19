@@ -23,8 +23,6 @@ def mine_image(detector, size, path):
     blockStride = (8,8)
     cellSize = (8,8)
     nbins = 9
-    print size
-    print len(detector)
     hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins)
     hog.setSVMDetector(np.array(detector, dtype=np.float32))
 
