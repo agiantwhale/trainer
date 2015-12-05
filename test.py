@@ -20,6 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", nargs="?", type=str, default=os.getcwd()+"/result.feature",
                         help="detecting vector output file")
     parser.add_argument("-s", "--source", nargs="?", type=str, default=0, help="test source")
+    parser.add_argument("-t", "--scale", nargs="?", type=float, default=1, help="scale output")
 
     args = parser.parse_args()
 
@@ -27,6 +28,7 @@ if __name__ == "__main__":
     height = args.height
     output = args.output
     source = args.source
+    scale = args.scale
 
     SIZE = (width, height)
 
@@ -55,18 +57,22 @@ if __name__ == "__main__":
         camera_source = int(source)
         cap = cv2.VideoCapture(camera_source)
         while True:
-            ret, frame = cap.read()
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            ret, image = cap.read()
+            imheight, imwidth, channels = image.shape
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             found, w = hog.detectMultiScale(gray)
-            draw_detections(frame, found)
-            cv2.imshow("Test", frame)
+            draw_detections(image, found)
+            image = cv2.resize(image, (int(imwidth * scale), int(imheight * scale)))
+            cv2.imshow("Test", image)
             if cv2.waitKey(1) == 27:
                 break
     except ValueError:
         image = cv2.imread(source)
+        imheight, imwidth, channels = image.shape
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         found, w = hog.detectMultiScale(gray)
         draw_detections(image, found)
+        image = cv2.resize(image, (int(imwidth * scale), int(imheight * scale)))
         cv2.imshow("Test",image)
         cv2.waitKey(0)
 
