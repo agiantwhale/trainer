@@ -6,6 +6,7 @@ Tests the trained data.
 import cv2
 import numpy as np
 import os
+import time
 import argparse
 
 def draw_detections(img, rects):
@@ -54,29 +55,23 @@ if __name__ == "__main__":
     hog.setSVMDetector(np.array(detector, dtype=np.float32))
 
     try:
-        try:
-            feed_source = int(source)
-        except ValueError:
-            feed_source = source
-        cap = cv2.VideoCapture(feed_source)
-        while True:
-            ret, image = cap.read()
-            imheight, imwidth, channels = image.shape
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            found, w = hog.detectMultiScale(gray)
-            draw_detections(image, found)
-            image = cv2.resize(image, (int(imwidth * scale), int(imheight * scale)))
-            cv2.imshow("Test", image)
-            if cv2.waitKey(1) == 27:
-                break
+        feed_source = int(source)
     except ValueError:
-        image = cv2.imread(source)
+        feed_source = source
+    cap = cv2.VideoCapture(feed_source)
+    while True:
+        ret, image = cap.read()
         imheight, imwidth, channels = image.shape
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        start_time = time.time()
         found, w = hog.detectMultiScale(gray)
+        fps = 1 / (time.time() - start_time)
+        print "FPS:" , fps, "-", len(found), "roombas detected"
         draw_detections(image, found)
         image = cv2.resize(image, (int(imwidth * scale), int(imheight * scale)))
-        cv2.imshow("Test",image)
-        cv2.waitKey(0)
+        cv2.imshow("Test", image)
+        if cv2.waitKey(1) == 27:
+            break
 
+    cv2.waitKey()
     cv2.destroyAllWindows()
