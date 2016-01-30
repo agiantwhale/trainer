@@ -54,8 +54,11 @@ if __name__ == "__main__":
     hog.setSVMDetector(np.array(detector, dtype=np.float32))
 
     try:
-        camera_source = int(source)
-        cap = cv2.VideoCapture(camera_source)
+        try:
+            feed_source = int(source)
+        except ValueError:
+            feed_source = source
+        cap = cv2.VideoCapture(feed_source)
         while True:
             ret, image = cap.read()
             imheight, imwidth, channels = image.shape
