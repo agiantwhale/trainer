@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-LIBSVM_PATH=""
 POS_PATH=""
 NEG_PATH=""
 OUTPUT_PATH=""
@@ -18,7 +17,7 @@ python "$TRAINER_PATH/extract_trainset.py" \
   -n $NEG_PATH $WIDTH $HEIGHT
 
 # Train
-"$LIBSVM_PATH/svm-train" -c 0.01 -s 3 -t 0 \
+svm-train -c 0.01 -s 3 -t 0 \
   "$OUTPUT_PATH/$MODEL_NAME" \
   "$OUTPUT_PATH/$MODEL_NAME.model"
 
@@ -38,7 +37,7 @@ do
     -m "$OUTPUT_PATH/$MODEL_NAME.features" $WIDTH $HEIGHT
 
   # Train
-  "$LIBSVM_PATH/svm-train" -c 0.01 -s 3 -t 0 \
+  svm-train -c 0.01 -s 3 -t 0 \
     "$OUTPUT_PATH/$MODEL_NAME" \
     "$OUTPUT_PATH/$MODEL_NAME.model"
 
