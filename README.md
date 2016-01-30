@@ -2,8 +2,10 @@
 This repository includes scripts to make training HoG feature classifier on OpenCV easier.
 
 ### Requirements
+* Python
+* libsvm
+* numpy
 * OpenCV (must be exposed to Python interface)
-* libsvm (extracted & compiled)
 
 ### Usage
 Change necessary variables in train.sh and execute the file.
@@ -11,7 +13,6 @@ Change necessary variables in train.sh and execute the file.
 ### Variables
 | Variable      | Description                          |
 | ------------- | -------------                        |
-| LIBSVM_PATH   | Path to compiled LIBSVM              |
 | POS_PATH      | Path to positive training set images |
 | NEG_PATH      | Path to negative training set images |
 | OUTPUT_PATH   | Path to save resulting files         |
